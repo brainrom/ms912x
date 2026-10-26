@@ -74,19 +74,18 @@ ms912x_get_encoder_type(enum ms912x_video_port port_type)
 static int ms912x_read_edid(void *data, u8 *buf, unsigned int block, size_t len)
 {
 	struct ms912x_device *ms912x = data;
-	int offset = block * EDID_LENGTH;
-	unsigned int i;
-	int ret;
+	unsigned int offset;
+	u16 address;
 
-	for (i = 0; i < len; i++) {
-		u16 address = MS912X_REG_EDID_BASE + offset + i;
+	if (len > EDID_LENGTH ||
+	    block > (MS912X_XDATA_ADDR_MAX - MS912X_REG_EDID_BASE) /
+		    EDID_LENGTH)
+		return -EINVAL;
 
-		ret = ms912x_read_byte(ms912x, address);
-		if (ret < 0)
-			return ret;
-		buf[i] = ret;
-	}
-	return 0;
+	offset = block * EDID_LENGTH;
+	address = MS912X_REG_EDID_BASE + offset;
+
+	return ms912x_read_bytes(ms912x, address, buf, len);
 }
 
 static int ms912x_add_cea_modes(struct drm_connector *connector,
